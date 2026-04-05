@@ -1,0 +1,25 @@
+services:
+  toolkit:
+    build:
+      context: .
+      target: runtime
+    image: showoff-python:runtime
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    command: ["showoff", "--help"]
+
+  checks:
+    build:
+      context: .
+      target: dev
+    image: showoff-python:dev
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    command:
+      [
+        "sh",
+        "-lc",
+        "ruff check . && ruff format --check . && coverage run -m pytest && coverage report --fail-under=100 && python -m build",
+      ]
