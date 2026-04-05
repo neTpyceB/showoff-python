@@ -2,7 +2,7 @@
 
 ## Operating Rules
 
-- Keep scope limited to the explicit backend requirements.
+- Keep scope limited to the async aggregation requirements.
 - Keep implementation minimal and production-ready.
 - Use pinned current stable versions only.
 - Run lint, tests, build, and Docker validation after every change.
@@ -10,6 +10,6 @@
 
 ## Project
 
-- Name: Notes REST API Service
-- Stack: FastAPI, SQLite, Docker
-- Features: CRUD endpoints, request validation, OpenAPI docs, bearer auth
+- Name: Async Data Aggregator
+- Stack: FastAPI, asyncio, httpx, Docker
+- Features: concurrent API calls, merged result, timeout handling, retry handling

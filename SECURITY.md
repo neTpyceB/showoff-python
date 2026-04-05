@@ -6,11 +6,7 @@
 
 ## Findings
 
-- All CRUD endpoints require a bearer token.
-- Default local token is provided through Docker Compose for local development only.
-- No secrets are stored in the repository.
-- SQLite writes are limited to the configured database path.
-
-## Notes
-
-- Replace `APP_API_TOKEN` in non-local environments.
+- The public aggregator exposes only read endpoints.
+- Upstream base URLs are configured through environment variables.
+- Failure handling does not leak stack traces in API responses.
+- No credentials or tokens are required.

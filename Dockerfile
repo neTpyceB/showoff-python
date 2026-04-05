@@ -10,7 +10,7 @@ COPY pyproject.toml README.md ./
 COPY src ./src
 
 RUN python -m pip install --upgrade pip==26.0.1 && \
-    python -m pip install build==1.4.0 && \
+    python -m pip install build==1.4.1 && \
     python -m build
 
 FROM python:3.14.3-slim AS runtime
@@ -27,9 +27,9 @@ RUN python -m pip install --upgrade pip==26.0.1 && \
     python -m pip install /tmp/*.whl && \
     rm -rf /tmp/*.whl
 
-EXPOSE 8000
+EXPOSE 8000 9000
 
-CMD ["showoff-api"]
+CMD ["showoff-aggregator"]
 
 FROM python:3.14.3-slim AS dev
 

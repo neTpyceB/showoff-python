@@ -1,27 +1,29 @@
 # Architecture
 
-## Domain
+## Services
 
-- Entity: `Note`
-- Fields: `id`, `title`, `content`
+- `aggregator`: public FastAPI service exposing `/aggregate/{user_id}`.
+- `mock-api`: local upstream service exposing `/profile/{user_id}`, `/activity/{user_id}`, and `/status/{user_id}`.
 
 ## Structure
 
-- `src/showoff_api/config.py`: environment-driven runtime settings.
-- `src/showoff_api/auth.py`: bearer token enforcement.
-- `src/showoff_api/repository.py`: SQLite persistence.
-- `src/showoff_api/schemas.py`: request and response models.
-- `src/showoff_api/app.py`: FastAPI application factory and routes.
-- `src/showoff_api/__main__.py`: process entrypoint.
+- `src/showoff_async/config.py`: environment-driven runtime settings.
+- `src/showoff_async/service.py`: concurrent fetch, retry, timeout, and merge logic.
+- `src/showoff_async/app.py`: aggregator FastAPI app.
+- `src/showoff_async/mock_app.py`: local upstream FastAPI app for runtime validation.
+- `src/showoff_async/models.py`: request and response models.
+- `src/showoff_async/__main__.py`: aggregator process entrypoint.
+- `src/showoff_async/mock_main.py`: mock upstream process entrypoint.
 
-## Request Flow
+## Concurrency Model
 
-1. FastAPI validates the request.
-2. Bearer auth dependency verifies the token.
-3. Route handler calls the repository.
-4. Response model shapes the output.
+- One request fans out to three upstream HTTP calls.
+- `asyncio.TaskGroup` runs the calls concurrently.
+- Each upstream call uses an `httpx.AsyncClient` with explicit timeout.
+- Retries are handled in the aggregator, not by the HTTP client.
 
-## Persistence
+## Failure Model
 
-- SQLite database file path comes from `APP_DATABASE_PATH`.
-- Schema is created on startup if missing.
+- If any source still fails after retry exhaustion, the whole aggregation fails.
+- Timeout exhaustion returns `504`.
+- Other upstream failures return `502`.

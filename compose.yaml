@@ -1,27 +1,47 @@
 services:
-  api:
+  aggregator:
     build:
       context: .
       target: runtime
+    command: ["showoff-aggregator"]
     environment:
-      APP_API_TOKEN: local-token
-      APP_DATABASE_PATH: /data/notes.db
-      APP_HOST: 0.0.0.0
-      APP_PORT: "8000"
+      AGGREGATOR_ACTIVITY_URL: http://mock-api:9000/activity
+      AGGREGATOR_PROFILE_URL: http://mock-api:9000/profile
+      AGGREGATOR_STATUS_URL: http://mock-api:9000/status
+      AGGREGATOR_HOST: 0.0.0.0
+      AGGREGATOR_PORT: "8000"
+      AGGREGATOR_RETRIES: "2"
+      AGGREGATOR_TIMEOUT_SECONDS: "0.5"
+    depends_on:
+      - mock-api
     ports:
       - "8000:8000"
-    volumes:
-      - ./data:/data
+
+  mock-api:
+    build:
+      context: .
+      target: runtime
+    command: ["showoff-mock-api"]
+    environment:
+      MOCK_API_HOST: 0.0.0.0
+      MOCK_API_PORT: "9000"
+    ports:
+      - "9000:9000"
 
   checks:
     build:
       context: .
       target: dev
     environment:
-      APP_API_TOKEN: local-token
-      APP_DATABASE_PATH: /workspace/data/checks.db
-      APP_HOST: 0.0.0.0
-      APP_PORT: "8000"
+      AGGREGATOR_ACTIVITY_URL: http://upstream.test/activity
+      AGGREGATOR_PROFILE_URL: http://upstream.test/profile
+      AGGREGATOR_STATUS_URL: http://upstream.test/status
+      AGGREGATOR_HOST: 0.0.0.0
+      AGGREGATOR_PORT: "8000"
+      AGGREGATOR_RETRIES: "2"
+      AGGREGATOR_TIMEOUT_SECONDS: "0.1"
+      MOCK_API_HOST: 0.0.0.0
+      MOCK_API_PORT: "9000"
     volumes:
       - .:/workspace
     working_dir: /workspace

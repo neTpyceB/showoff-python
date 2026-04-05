@@ -2,49 +2,90 @@ from __future__ import annotations
 
 import runpy
 import sys
-from pathlib import Path
 
 import pytest
 
-from showoff_api.__main__ import main
-from showoff_api.config import Settings
+from showoff_async.__main__ import main as aggregator_main
+from showoff_async.config import AggregatorSettings, MockSettings
+from showoff_async.mock_main import main as mock_main
 
 
 @pytest.mark.unit
-def test_main_runs_uvicorn(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
-    settings = Settings(tmp_path / "notes.db", "token", "127.0.0.1", 9000)
+def test_aggregator_main_runs_uvicorn(monkeypatch: pytest.MonkeyPatch) -> None:
+    settings = AggregatorSettings(
+        profile_url="http://upstream.test/profile",
+        activity_url="http://upstream.test/activity",
+        status_url="http://upstream.test/status",
+        timeout_seconds=0.1,
+        retries=1,
+        host="127.0.0.1",
+        port=9000,
+    )
     captured: dict[str, object] = {}
+    monkeypatch.setattr(
+        "showoff_async.config.AggregatorSettings.from_env",
+        lambda: settings,
+    )
+    monkeypatch.setattr(
+        "uvicorn.run",
+        lambda app, host, port: captured.update(app=app, host=host, port=port),
+    )
 
-    monkeypatch.setattr("showoff_api.__main__.Settings.from_env", lambda: settings)
-
-    def fake_run(app: object, host: str, port: int) -> None:
-        captured["app"] = app
-        captured["host"] = host
-        captured["port"] = port
-
-    monkeypatch.setattr("showoff_api.__main__.uvicorn.run", fake_run)
-
-    assert main() == 0
+    assert aggregator_main() == 0
     assert captured["host"] == "127.0.0.1"
     assert captured["port"] == 9000
-    assert captured["app"].title == "Notes REST API Service"
 
 
 @pytest.mark.unit
-def test_module_entrypoint_exits_with_main_status(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
-    monkeypatch.setattr(sys, "argv", ["showoff-api"])
-    sys.modules.pop("showoff_api.__main__", None)
-    settings = Settings(tmp_path / "notes.db", "token", "127.0.0.1", 9000)
-    monkeypatch.setattr("showoff_api.config.Settings.from_env", lambda: settings)
+def test_mock_main_runs_uvicorn(monkeypatch: pytest.MonkeyPatch) -> None:
+    settings = MockSettings(host="127.0.0.1", port=9010)
+    captured: dict[str, object] = {}
+    monkeypatch.setattr("showoff_async.config.MockSettings.from_env", lambda: settings)
+    monkeypatch.setattr(
+        "uvicorn.run",
+        lambda app, host, port: captured.update(app=app, host=host, port=port),
+    )
+
+    assert mock_main() == 0
+    assert captured["host"] == "127.0.0.1"
+    assert captured["port"] == 9010
+
+
+@pytest.mark.unit
+def test_package_entrypoint_exits(monkeypatch: pytest.MonkeyPatch) -> None:
+    sys.modules.pop("showoff_async.__main__", None)
+    monkeypatch.setattr(sys, "argv", ["showoff-aggregator"])
+    monkeypatch.setattr(
+        "showoff_async.config.AggregatorSettings.from_env",
+        lambda: AggregatorSettings(
+            profile_url="http://upstream.test/profile",
+            activity_url="http://upstream.test/activity",
+            status_url="http://upstream.test/status",
+            timeout_seconds=0.1,
+            retries=1,
+            host="127.0.0.1",
+            port=9000,
+        ),
+    )
     monkeypatch.setattr("uvicorn.run", lambda app, host, port: None)
 
     with pytest.raises(SystemExit) as error:
-        runpy.run_module("showoff_api.__main__", run_name="__main__")
+        runpy.run_module("showoff_async", run_name="__main__")
+
+    assert error.value.code == 0
+
+
+@pytest.mark.unit
+def test_mock_entrypoint_exits(monkeypatch: pytest.MonkeyPatch) -> None:
+    sys.modules.pop("showoff_async.mock_main", None)
+    monkeypatch.setattr(sys, "argv", ["showoff-mock-api"])
+    monkeypatch.setattr(
+        "showoff_async.config.MockSettings.from_env",
+        lambda: MockSettings(host="127.0.0.1", port=9010),
+    )
+    monkeypatch.setattr("uvicorn.run", lambda app, host, port: None)
+
+    with pytest.raises(SystemExit) as error:
+        runpy.run_module("showoff_async.mock_main", run_name="__main__")
 
     assert error.value.code == 0

@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import uvicorn
 
-from showoff_api.app import create_app
-from showoff_api.config import Settings
+from showoff_async.app import create_app
+from showoff_async.config import AggregatorSettings
 
 
 def main() -> int:
-    settings = Settings.from_env()
+    settings = AggregatorSettings.from_env()
     uvicorn.run(create_app(settings), host=settings.host, port=settings.port)
     return 0
 

@@ -18,19 +18,31 @@ def free_port() -> int:
 
 
 @pytest.mark.e2e
-def test_end_to_end_http_flow(tmp_path: Path) -> None:
-    port = free_port()
-    database_path = tmp_path / "notes.db"
+def test_end_to_end_http_flow() -> None:
+    aggregator_port = free_port()
+    mock_port = free_port()
     env = {
         **os.environ,
-        "APP_API_TOKEN": "e2e-token",
-        "APP_DATABASE_PATH": str(database_path),
-        "APP_HOST": "127.0.0.1",
-        "APP_PORT": str(port),
+        "AGGREGATOR_PROFILE_URL": f"http://127.0.0.1:{mock_port}/profile",
+        "AGGREGATOR_ACTIVITY_URL": f"http://127.0.0.1:{mock_port}/activity",
+        "AGGREGATOR_STATUS_URL": f"http://127.0.0.1:{mock_port}/status",
+        "AGGREGATOR_TIMEOUT_SECONDS": "0.5",
+        "AGGREGATOR_RETRIES": "1",
+        "AGGREGATOR_HOST": "127.0.0.1",
+        "AGGREGATOR_PORT": str(aggregator_port),
+        "MOCK_API_HOST": "127.0.0.1",
+        "MOCK_API_PORT": str(mock_port),
         "PYTHONPATH": str(Path.cwd() / "src"),
     }
-    process = subprocess.Popen(
-        [sys.executable, "-m", "showoff_api"],
+    mock_process = subprocess.Popen(
+        [sys.executable, "-m", "showoff_async.mock_main"],
+        cwd=Path.cwd(),
+        env=env,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    aggregator_process = subprocess.Popen(
+        [sys.executable, "-m", "showoff_async"],
         cwd=Path.cwd(),
         env=env,
         stdout=subprocess.DEVNULL,
@@ -41,7 +53,10 @@ def test_end_to_end_http_flow(tmp_path: Path) -> None:
         deadline = time.time() + 10
         while True:
             try:
-                docs = httpx.get(f"http://127.0.0.1:{port}/docs", timeout=0.2)
+                docs = httpx.get(
+                    f"http://127.0.0.1:{aggregator_port}/docs",
+                    timeout=0.2,
+                )
                 if docs.status_code == 200:
                     break
             except httpx.HTTPError:
@@ -49,41 +64,20 @@ def test_end_to_end_http_flow(tmp_path: Path) -> None:
                     raise
                 time.sleep(0.1)
 
-        headers = {"Authorization": "Bearer e2e-token"}
-        created = httpx.post(
-            f"http://127.0.0.1:{port}/notes",
-            headers=headers,
-            json={"title": "First note", "content": "FastAPI with SQLite."},
+        response = httpx.get(
+            f"http://127.0.0.1:{aggregator_port}/aggregate/ada",
             timeout=5,
         )
-        assert created.status_code == 201
-        note_id = created.json()["id"]
 
-        listed = httpx.get(f"http://127.0.0.1:{port}/notes", headers=headers, timeout=5)
-        assert listed.status_code == 200
-        assert listed.json() == [
-            {"id": note_id, "title": "First note", "content": "FastAPI with SQLite."},
-        ]
-
-        updated = httpx.put(
-            f"http://127.0.0.1:{port}/notes/{note_id}",
-            headers=headers,
-            json={"title": "Updated note", "content": "Still production-ready."},
-            timeout=5,
-        )
-        assert updated.status_code == 200
-        assert updated.json() == {
-            "id": note_id,
-            "title": "Updated note",
-            "content": "Still production-ready.",
+        assert response.status_code == 200
+        assert response.json() == {
+            "user_id": "ada",
+            "profile": {"user_id": "ada", "name": "Ada", "role": "engineer"},
+            "activity": {"user_id": "ada", "commits": 9, "reviews": 3},
+            "status": {"user_id": "ada", "availability": "focused"},
         }
-
-        deleted = httpx.delete(
-            f"http://127.0.0.1:{port}/notes/{note_id}",
-            headers=headers,
-            timeout=5,
-        )
-        assert deleted.status_code == 204
     finally:
-        process.terminate()
-        process.wait(timeout=10)
+        aggregator_process.terminate()
+        aggregator_process.wait(timeout=10)
+        mock_process.terminate()
+        mock_process.wait(timeout=10)

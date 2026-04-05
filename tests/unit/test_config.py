@@ -1,44 +1,48 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 
-from showoff_api.config import Settings
+from showoff_async.config import AggregatorSettings, MockSettings
 
 
 @pytest.mark.unit
-def test_settings_from_env_uses_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("APP_API_TOKEN", "token")
-    monkeypatch.delenv("APP_DATABASE_PATH", raising=False)
-    monkeypatch.delenv("APP_HOST", raising=False)
-    monkeypatch.delenv("APP_PORT", raising=False)
+def test_aggregator_settings_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("AGGREGATOR_PROFILE_URL", "http://example.test/profile")
+    monkeypatch.setenv("AGGREGATOR_ACTIVITY_URL", "http://example.test/activity")
+    monkeypatch.setenv("AGGREGATOR_STATUS_URL", "http://example.test/status")
+    monkeypatch.setenv("AGGREGATOR_TIMEOUT_SECONDS", "0.2")
+    monkeypatch.setenv("AGGREGATOR_RETRIES", "3")
+    monkeypatch.setenv("AGGREGATOR_HOST", "127.0.0.1")
+    monkeypatch.setenv("AGGREGATOR_PORT", "9001")
 
-    settings = Settings.from_env()
+    settings = AggregatorSettings.from_env()
 
-    assert settings == Settings(Path("data/notes.db"), "token", "0.0.0.0", 8000)
-
-
-@pytest.mark.unit
-def test_settings_from_env_uses_explicit_values(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
-    monkeypatch.setenv("APP_API_TOKEN", "token")
-    monkeypatch.setenv("APP_DATABASE_PATH", str(tmp_path / "notes.db"))
-    monkeypatch.setenv("APP_HOST", "127.0.0.1")
-    monkeypatch.setenv("APP_PORT", "9000")
-
-    settings = Settings.from_env()
-
-    assert settings == Settings(tmp_path / "notes.db", "token", "127.0.0.1", 9000)
+    assert settings == AggregatorSettings(
+        profile_url="http://example.test/profile",
+        activity_url="http://example.test/activity",
+        status_url="http://example.test/status",
+        timeout_seconds=0.2,
+        retries=3,
+        host="127.0.0.1",
+        port=9001,
+    )
 
 
 @pytest.mark.unit
-def test_settings_from_env_requires_api_token(
+def test_aggregator_settings_require_upstream_urls(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.delenv("APP_API_TOKEN", raising=False)
+    monkeypatch.delenv("AGGREGATOR_PROFILE_URL", raising=False)
+    monkeypatch.delenv("AGGREGATOR_ACTIVITY_URL", raising=False)
+    monkeypatch.delenv("AGGREGATOR_STATUS_URL", raising=False)
 
-    with pytest.raises(RuntimeError, match="APP_API_TOKEN is required"):
-        Settings.from_env()
+    with pytest.raises(RuntimeError, match="AGGREGATOR_PROFILE_URL is required"):
+        AggregatorSettings.from_env()
+
+
+@pytest.mark.unit
+def test_mock_settings_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("MOCK_API_HOST", "127.0.0.1")
+    monkeypatch.setenv("MOCK_API_PORT", "9010")
+
+    assert MockSettings.from_env() == MockSettings(host="127.0.0.1", port=9010)

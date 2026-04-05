@@ -1,48 +1,42 @@
-# Notes REST API Service
+# Async Data Aggregator
 
-Minimal production-ready FastAPI backend for personal notes.
+Minimal production-ready async aggregation service.
 
 ## Features
 
-- CRUD endpoints for notes
-- Pydantic request validation
-- OpenAPI and Swagger docs
-- Bearer token authentication
-- SQLite persistence
+- Concurrent upstream HTTP calls
+- Merged response payload
+- Explicit timeout handling
+- Explicit retry handling
 - Docker-first local run
 
 ## Stack
 
 - Python 3.14.3
 - FastAPI 0.135.2
+- HTTPX 0.28.1
 - Uvicorn 0.41.0
-- SQLite
+- `asyncio.TaskGroup`
 
 ## Run
 
 ```bash
-docker compose up --build api
+docker compose up --build
 ```
 
-API:
+Aggregator:
 
 - `http://localhost:8000/docs`
-- `http://localhost:8000/openapi.json`
+- `http://localhost:8000/aggregate/ada`
 
-Default local bearer token:
+Mock upstream:
 
-- `local-token`
+- `http://localhost:9000/docs`
 
-## Example Requests
+## Example
 
 ```bash
-curl -X POST http://localhost:8000/notes \
-  -H "Authorization: Bearer local-token" \
-  -H "Content-Type: application/json" \
-  -d '{"title":"First note","content":"Production-ready FastAPI."}'
-
-curl http://localhost:8000/notes \
-  -H "Authorization: Bearer local-token"
+curl http://localhost:8000/aggregate/ada
 ```
 
 ## Checks
