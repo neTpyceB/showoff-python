@@ -1,25 +1,28 @@
 services:
-  toolkit:
+  api:
     build:
       context: .
       target: runtime
-    image: showoff-python:runtime
+    environment:
+      APP_API_TOKEN: local-token
+      APP_DATABASE_PATH: /data/notes.db
+      APP_HOST: 0.0.0.0
+      APP_PORT: "8000"
+    ports:
+      - "8000:8000"
     volumes:
-      - .:/workspace
-    working_dir: /workspace
-    command: ["showoff", "--help"]
+      - ./data:/data
 
   checks:
     build:
       context: .
       target: dev
-    image: showoff-python:dev
+    environment:
+      APP_API_TOKEN: local-token
+      APP_DATABASE_PATH: /workspace/data/checks.db
+      APP_HOST: 0.0.0.0
+      APP_PORT: "8000"
     volumes:
       - .:/workspace
     working_dir: /workspace
-    command:
-      [
-        "sh",
-        "-lc",
-        "ruff check . && ruff format --check . && coverage run -m pytest && coverage report --fail-under=100 && python -m build",
-      ]
+    command: ["sh", "-lc", "ruff check . && ruff format --check . && coverage run -m pytest && coverage report --fail-under=100 && python -m build"]

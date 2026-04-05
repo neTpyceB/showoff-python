@@ -6,12 +6,11 @@
 
 ## Findings
 
-- No network access is used by the application runtime.
-- No secrets, tokens, or credentials are required.
-- File writes are limited to the paths passed on the CLI.
-- Rename and format commands mutate files directly by design.
+- All CRUD endpoints require a bearer token.
+- Default local token is provided through Docker Compose for local development only.
+- No secrets are stored in the repository.
+- SQLite writes are limited to the configured database path.
 
-## Dependency Posture
+## Notes
 
-- Runtime dependencies: none outside Python standard library.
-- Development dependencies are pinned to exact versions in `pyproject.toml`.
+- Replace `APP_API_TOKEN` in non-local environments.

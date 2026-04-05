@@ -19,7 +19,7 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-WORKDIR /workspace
+WORKDIR /app
 
 COPY --from=builder /app/dist/*.whl /tmp/
 
@@ -27,7 +27,9 @@ RUN python -m pip install --upgrade pip==26.0.1 && \
     python -m pip install /tmp/*.whl && \
     rm -rf /tmp/*.whl
 
-CMD ["showoff", "--help"]
+EXPOSE 8000
+
+CMD ["showoff-api"]
 
 FROM python:3.14.3-slim AS dev
 

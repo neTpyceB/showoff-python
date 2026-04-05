@@ -1,6 +1,6 @@
 PYTHON := python
 
-.PHONY: install lint format test build check docker-build docker-smoke docker-test
+.PHONY: install lint format test build check docker-build docker-up docker-down docker-test
 
 install:
 	$(PYTHON) -m pip install --upgrade pip==26.0.1
@@ -25,8 +25,11 @@ check: lint test build
 docker-build:
 	docker compose build
 
-docker-smoke:
-	docker compose run --rm toolkit showoff --help
+docker-up:
+	docker compose up --build api
+
+docker-down:
+	docker compose down --remove-orphans
 
 docker-test:
 	docker compose run --rm checks

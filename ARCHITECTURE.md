@@ -1,21 +1,27 @@
 # Architecture
 
+## Domain
+
+- Entity: `Note`
+- Fields: `id`, `title`, `content`
+
 ## Structure
 
-- `src/showoff_cli/cli.py`: CLI parser and command handlers.
-- `src/showoff_cli/core.py`: pure filesystem and formatting operations.
-- `tests/`: unit, integration, smoke, and end-to-end coverage.
-- `Dockerfile`: multi-stage container build.
-- `compose.yaml`: local runtime and check services.
+- `src/showoff_api/config.py`: environment-driven runtime settings.
+- `src/showoff_api/auth.py`: bearer token enforcement.
+- `src/showoff_api/repository.py`: SQLite persistence.
+- `src/showoff_api/schemas.py`: request and response models.
+- `src/showoff_api/app.py`: FastAPI application factory and routes.
+- `src/showoff_api/__main__.py`: process entrypoint.
 
-## Command Model
+## Request Flow
 
-- `search`: recursive filename search from a root path.
-- `rename`: recursive file rename by string replacement inside file names.
-- `format`: in-place or redirected JSON/CSV normalization.
+1. FastAPI validates the request.
+2. Bearer auth dependency verifies the token.
+3. Route handler calls the repository.
+4. Response model shapes the output.
 
-## Design Constraints
+## Persistence
 
-- Standard library only at runtime.
-- Single package, single CLI entrypoint.
-- No fallback branches or unused abstractions.
+- SQLite database file path comes from `APP_DATABASE_PATH`.
+- Schema is created on startup if missing.

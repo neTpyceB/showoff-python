@@ -1,6 +1,6 @@
 # Rules
 
-- Scope is limited to explicit requirements.
-- Runtime dependencies stay at zero unless a requirement forces them.
-- Standard library is preferred when it fully covers the scope.
-- All changes must keep Docker, tests, docs, and CI in sync.
+- Implement only explicit backend scope.
+- Keep runtime dependencies minimal.
+- Prefer standard library where it fully covers the need.
+- Keep Docker, tests, CI, and docs synchronized.

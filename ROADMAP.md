@@ -2,17 +2,18 @@
 
 ## Completed
 
-- Project contract and repository docs
-- Python package scaffold
-- Docker runtime and check services
-- GitHub Actions CI
-- CLI commands for search, rename, and JSON/CSV formatting
-- Unit, integration, smoke, and end-to-end tests
+- FastAPI service scaffold
+- SQLite persistence
+- Bearer auth
+- CRUD routes
+- Validation and OpenAPI docs
+- Unit, integration, smoke, and e2e coverage
+- Docker runtime and GitHub Actions
 
 ## Current
 
-- Project 1 delivered
+- Project 3 delivered
 
 ## Next
 
-- Wait for the next learning project description
+- Wait for the next backend learning project
