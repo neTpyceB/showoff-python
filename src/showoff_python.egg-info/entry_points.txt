@@ -1,0 +1,2 @@
+[console_scripts]
+showoff = showoff_cli.cli:main

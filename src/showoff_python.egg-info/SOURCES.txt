@@ -1,0 +1,12 @@
+README.md
+pyproject.toml
+src/showoff_cli/__init__.py
+src/showoff_cli/__main__.py
+src/showoff_cli/cli.py
+src/showoff_cli/core.py
+src/showoff_python.egg-info/PKG-INFO
+src/showoff_python.egg-info/SOURCES.txt
+src/showoff_python.egg-info/dependency_links.txt
+src/showoff_python.egg-info/entry_points.txt
+src/showoff_python.egg-info/requires.txt
+src/showoff_python.egg-info/top_level.txt
