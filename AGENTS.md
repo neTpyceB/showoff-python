@@ -2,14 +2,15 @@
 
 ## Operating Rules
 
-- Keep scope limited to the queue-system requirements.
+- Keep scope limited to the ETL requirements.
 - Keep implementation minimal and production-ready.
 - Use pinned current stable versions only.
 - Run lint, tests, build, and Docker validation after every change.
-- Keep repository docs aligned with the running queue stack.
+- Keep repository docs aligned with the running ETL stack.
 
 ## Project
 
-- Name: Report Generation Queue
-- Stack: FastAPI, Celery, Redis
-- Features: background jobs, retries, scheduling
+- Name: ETL Pipeline System
+- Stack: FastAPI, SQLite
+- Features: ingest, transform, store, monitoring, logging
+- Modes: stream, batch

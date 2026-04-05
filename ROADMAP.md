@@ -2,18 +2,18 @@
 
 ## Completed
 
-- FastAPI queue API scaffold
-- Celery worker and beat configuration
-- Redis-backed broker, result store, and heartbeat storage
-- Background report task with retry policy
-- Scheduled heartbeat task
+- FastAPI ETL API scaffold
+- SQLite-backed run and record storage
+- Streaming and batch processing modes
+- CSV ingest and row transformation pipeline
+- Monitoring endpoint and runtime logging
 - Unit, integration, smoke, and e2e coverage
 - Docker runtime and GitHub Actions
 
 ## Current
 
-- Project 5 delivered
+- Project 6 delivered
 
 ## Next
 
-- Wait for the next backend workload project
+- Wait for the next Python project

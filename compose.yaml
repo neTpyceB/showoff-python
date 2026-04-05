@@ -3,84 +3,30 @@ services:
     build:
       context: .
       target: runtime
-    command: ["showoff-queue-api"]
+    command: ["showoff-pipeline-api"]
     environment:
-      QUEUE_API_HOST: 0.0.0.0
-      QUEUE_API_PORT: "8000"
-      QUEUE_BROKER_URL: redis://redis:6379/0
-      QUEUE_RESULT_BACKEND: redis://redis:6379/1
-      QUEUE_REDIS_URL: redis://redis:6379/2
-      QUEUE_HEARTBEAT_KEY: queue:heartbeat
-      QUEUE_HEARTBEAT_SECONDS: "3"
-      QUEUE_RETRY_MAX: "2"
-    depends_on:
-      - redis
-      - worker
-      - beat
+      PIPELINE_API_HOST: 0.0.0.0
+      PIPELINE_API_PORT: "8000"
+      PIPELINE_DB_PATH: /data/pipeline.db
+      PIPELINE_INSERT_BATCH_SIZE: "500"
     ports:
       - "8000:8000"
-
-  worker:
-    build:
-      context: .
-      target: runtime
-    command:
-      [
-        "celery",
-        "--app",
-        "showoff_queue.queue:celery_app",
-        "worker",
-        "--loglevel=info",
-      ]
-    environment:
-      QUEUE_BROKER_URL: redis://redis:6379/0
-      QUEUE_RESULT_BACKEND: redis://redis:6379/1
-      QUEUE_REDIS_URL: redis://redis:6379/2
-      QUEUE_HEARTBEAT_KEY: queue:heartbeat
-      QUEUE_HEARTBEAT_SECONDS: "3"
-      QUEUE_RETRY_MAX: "2"
-    depends_on:
-      - redis
-
-  beat:
-    build:
-      context: .
-      target: runtime
-    command:
-      [
-        "celery",
-        "--app",
-        "showoff_queue.queue:celery_app",
-        "beat",
-        "--loglevel=info",
-      ]
-    environment:
-      QUEUE_BROKER_URL: redis://redis:6379/0
-      QUEUE_RESULT_BACKEND: redis://redis:6379/1
-      QUEUE_REDIS_URL: redis://redis:6379/2
-      QUEUE_HEARTBEAT_KEY: queue:heartbeat
-      QUEUE_HEARTBEAT_SECONDS: "3"
-      QUEUE_RETRY_MAX: "2"
-    depends_on:
-      - redis
-
-  redis:
-    image: redis:8.6.2-alpine
+    volumes:
+      - pipeline-data:/data
 
   checks:
     build:
       context: .
       target: dev
     environment:
-      QUEUE_API_HOST: 0.0.0.0
-      QUEUE_API_PORT: "8000"
-      QUEUE_BROKER_URL: memory://
-      QUEUE_RESULT_BACKEND: cache+memory://
-      QUEUE_REDIS_URL: redis://redis:6379/2
-      QUEUE_HEARTBEAT_KEY: queue:heartbeat
-      QUEUE_HEARTBEAT_SECONDS: "3"
-      QUEUE_RETRY_MAX: "2"
+      PIPELINE_API_HOST: 0.0.0.0
+      PIPELINE_API_PORT: "8000"
+      PIPELINE_DB_PATH: /workspace/.tmp/pipeline.db
+      PIPELINE_INSERT_BATCH_SIZE: "500"
     volumes:
       - .:/workspace
     working_dir: /workspace
     command: ["sh", "-lc", "ruff check . && ruff format --check . && coverage run -m pytest && coverage report --fail-under=100 && python -m build"]
+
+volumes:
+  pipeline-data:

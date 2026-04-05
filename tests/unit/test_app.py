@@ -1,56 +1,54 @@
 from __future__ import annotations
 
-import pytest
+from io import BytesIO
+
 from fastapi.testclient import TestClient
-from starlette.requests import Request
 
-from showoff_queue.app import create_app, get_queue, get_redis, get_settings
-from showoff_queue.config import QueueSettings
-from showoff_queue.queue import create_celery
-
-
-class FakeRedis:
-    def __init__(self) -> None:
-        self.values: dict[str, str] = {}
-        self.closed = False
-
-    def get(self, key: str) -> str | None:
-        return self.values.get(key)
-
-    def close(self) -> None:
-        self.closed = True
+from showoff_pipeline.app import create_app
+from showoff_pipeline.config import Settings
+from showoff_pipeline.pipeline import PipelineService
 
 
-def make_settings() -> QueueSettings:
-    return QueueSettings(
-        broker_url="memory://",
-        result_backend="cache+memory://",
-        redis_url="redis://redis:6379/2",
-        heartbeat_key="queue:heartbeat",
-        heartbeat_seconds=3,
-        retry_max=2,
-        host="127.0.0.1",
-        port=8000,
+def make_client(tmp_path) -> TestClient:
+    settings = Settings(
+        api_host="0.0.0.0",
+        api_port=8000,
+        db_path=str(tmp_path / "pipeline.db"),
+        insert_batch_size=2,
     )
+    return TestClient(create_app(settings=settings, service=PipelineService(settings)))
 
 
-@pytest.mark.unit
-def test_dependencies_return_state_objects() -> None:
-    settings = make_settings()
-    queue = create_celery(settings)
-    redis_client = FakeRedis()
-    app = create_app(settings, queue, redis_client)
-    app.state.settings = settings
-    app.state.queue = queue
-    app.state.redis = redis_client
-    request = Request({"type": "http", "app": app})
+def test_health_endpoint(tmp_path) -> None:
+    with make_client(tmp_path) as client:
+        response = client.get("/health")
 
-    assert get_settings(request) == settings
-    assert get_queue(request) == queue
-    assert get_redis(request) == redis_client
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
 
 
-@pytest.mark.unit
-def test_app_closes_owned_redis_on_shutdown() -> None:
-    with TestClient(create_app(make_settings())) as client:
-        assert client.get("/health").json() == {"status": "ok"}
+def test_missing_run_returns_not_found(tmp_path) -> None:
+    with make_client(tmp_path) as client:
+        response = client.get("/pipeline/runs/missing")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Run not found"}
+
+
+def test_invalid_upload_returns_bad_request(tmp_path) -> None:
+    with make_client(tmp_path) as client:
+        response = client.post(
+            "/pipeline/runs",
+            files={
+                "file": (
+                    "broken.csv",
+                    BytesIO(b"wrong,columns\n1,2\n"),
+                    "text/csv",
+                )
+            },
+        )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": "CSV columns must be exactly: timestamp,account,amount"
+    }

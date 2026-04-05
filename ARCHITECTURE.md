@@ -2,27 +2,30 @@
 
 ## Services
 
-- `api`: public FastAPI service for submitting jobs and reading status.
-- `worker`: Celery worker for background processing.
-- `beat`: Celery beat scheduler for periodic tasks.
-- `redis`: broker, result backend, and shared state store.
+- `api`: public FastAPI service for ingesting datasets and reading pipeline state.
+- `sqlite`: local file-backed storage mounted into the API container.
 
 ## Domain
 
-- Job type: report generation.
-- Input: `report_id`, `content`.
-- Output: `report_id`, `line_count`, `word_count`, `checksum`.
+- Dataset type: CSV.
+- Required columns: `timestamp`, `account`, `amount`.
+- Transform: normalize `account`, parse `timestamp`, convert `amount` to cents.
+- Storage: `pipeline_runs` metadata table plus `etl_records` transformed row table.
 
 ## Structure
 
-- `src/showoff_queue/config.py`: environment-driven runtime settings.
-- `src/showoff_queue/queue.py`: Celery app, tasks, retry policy, and scheduling.
-- `src/showoff_queue/app.py`: FastAPI routes and dependency wiring.
-- `src/showoff_queue/models.py`: request and response models.
-- `src/showoff_queue/__main__.py`: API process entrypoint.
+- `src/showoff_pipeline/config.py`: environment-driven runtime settings.
+- `src/showoff_pipeline/pipeline.py`: schema management, ingest, transform, and store logic.
+- `src/showoff_pipeline/app.py`: FastAPI routes and dependency wiring.
+- `src/showoff_pipeline/models.py`: API response models and execution modes.
+- `src/showoff_pipeline/__main__.py`: API process entrypoint.
 
-## Scheduling
+## Execution Modes
 
-- Celery Beat runs `showoff_queue.record_heartbeat` on a fixed interval.
-- The task writes the latest heartbeat timestamp into Redis.
-- The API exposes the latest timestamp at `/schedules/heartbeat`.
+- `stream`: reads and inserts rows in bounded batches for stable memory usage.
+- `batch`: materializes the dataset before insert to expose the batch tradeoff explicitly.
+
+## Monitoring
+
+- `/monitoring` returns run totals, success and failure counts, stored row totals, and the latest completion time.
+- Application logging emits run start, success, and failure events.

@@ -1,23 +1,23 @@
-# Report Generation Queue
+# ETL Pipeline System
 
-Minimal production-ready queue system with FastAPI, Celery, and Redis.
+Minimal production-ready ETL service with FastAPI and SQLite.
 
 ## Features
 
-- Background report jobs
-- Celery retries
-- Celery Beat scheduling
-- Job status API
+- Ingest CSV datasets
+- Transform rows into normalized records
+- Store transformed data in SQLite
+- Streaming and batch execution modes
+- Logging and monitoring endpoint
 - Docker-first local run
 
 ## Stack
 
-- Python 3.14.3
-- FastAPI 0.135.2
-- Celery 5.6.3
-- Redis 6.4.0 client
-- Redis 8.6.2-alpine server
-- Uvicorn 0.42.0
+- Python 3.14.0
+- FastAPI 0.135.3
+- Uvicorn 0.43.0
+- python-multipart 0.0.24
+- SQLite (stdlib)
 
 ## Run
 
@@ -29,13 +29,20 @@ API:
 
 - `http://localhost:8000/docs`
 - `http://localhost:8000/health`
+- `http://localhost:8000/monitoring`
 
 ## Example
 
 ```bash
-curl -X POST http://localhost:8000/jobs/reports \
-  -H "Content-Type: application/json" \
-  -d '{"report_id":"demo","content":"celery jobs run in the background"}'
+curl -X POST "http://localhost:8000/pipeline/runs?mode=stream" \
+  -F "file=@sample.csv"
+```
+
+Expected CSV columns:
+
+```csv
+timestamp,account,amount
+2026-01-01T10:00:00+00:00,Acme,10.50
 ```
 
 ## Checks

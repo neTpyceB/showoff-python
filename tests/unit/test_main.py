@@ -1,58 +1,29 @@
 from __future__ import annotations
 
-import runpy
-import sys
-
-import pytest
-
-from showoff_queue.__main__ import main
-from showoff_queue.config import QueueSettings
+from showoff_pipeline import __main__
+from showoff_pipeline.config import Settings
 
 
-@pytest.mark.unit
-def test_main_runs_uvicorn(monkeypatch: pytest.MonkeyPatch) -> None:
-    settings = QueueSettings(
-        broker_url="memory://",
-        result_backend="cache+memory://",
-        redis_url="redis://redis:6379/2",
-        heartbeat_key="queue:heartbeat",
-        heartbeat_seconds=3,
-        retry_max=2,
-        host="127.0.0.1",
-        port=9000,
+def test_main_starts_uvicorn(monkeypatch) -> None:
+    settings = Settings(
+        api_host="0.0.0.0",
+        api_port=8000,
+        db_path="/tmp/pipeline.db",
+        insert_batch_size=100,
     )
     captured: dict[str, object] = {}
-    monkeypatch.setattr("showoff_queue.config.QueueSettings.from_env", lambda: settings)
-    monkeypatch.setattr(
-        "uvicorn.run",
-        lambda app, host, port: captured.update(app=app, host=host, port=port),
-    )
 
-    assert main() == 0
-    assert captured["host"] == "127.0.0.1"
-    assert captured["port"] == 9000
+    monkeypatch.setattr(__main__, "get_settings", lambda: settings)
 
+    def fake_run(app, host: str, port: int) -> None:
+        captured["app"] = app
+        captured["host"] = host
+        captured["port"] = port
 
-@pytest.mark.unit
-def test_package_entrypoint_exits(monkeypatch: pytest.MonkeyPatch) -> None:
-    sys.modules.pop("showoff_queue.__main__", None)
-    monkeypatch.setattr(sys, "argv", ["showoff-queue-api"])
-    monkeypatch.setattr(
-        "showoff_queue.config.QueueSettings.from_env",
-        lambda: QueueSettings(
-            broker_url="memory://",
-            result_backend="cache+memory://",
-            redis_url="redis://redis:6379/2",
-            heartbeat_key="queue:heartbeat",
-            heartbeat_seconds=3,
-            retry_max=2,
-            host="127.0.0.1",
-            port=9000,
-        ),
-    )
-    monkeypatch.setattr("uvicorn.run", lambda app, host, port: None)
+    monkeypatch.setattr(__main__.uvicorn, "run", fake_run)
 
-    with pytest.raises(SystemExit) as error:
-        runpy.run_module("showoff_queue", run_name="__main__")
+    __main__.main()
 
-    assert error.value.code == 0
+    assert captured["host"] == "0.0.0.0"
+    assert captured["port"] == 8000
+    assert captured["app"].title == "ETL Pipeline System"

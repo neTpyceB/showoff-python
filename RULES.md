@@ -1,5 +1,6 @@
 # Rules
 
-- Implement only explicit queue-system scope.
+- Implement only explicit ETL scope.
 - Keep runtime dependencies minimal.
+- Keep streaming inserts memory-bounded.
 - Keep Docker, tests, CI, and docs synchronized.

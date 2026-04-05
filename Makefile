@@ -1,4 +1,4 @@
-PYTHON := python
+PYTHON := python3
 
 .PHONY: install lint format test build check docker-build docker-up docker-down docker-test
 

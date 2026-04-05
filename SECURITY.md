@@ -6,7 +6,8 @@
 
 ## Findings
 
-- The public API exposes only report submission, job status, and scheduler status.
-- Redis is used only on the internal Docker network.
-- Failure responses do not expose worker stack traces.
+- The public API exposes only health, monitoring, and pipeline run endpoints.
+- SQLite storage is mounted only into the API container.
+- The dataset contract is fixed to `timestamp,account,amount`.
+- Invalid datasets fail the run and are not partially stored.
 - No secrets or credentials are required for local runtime.
