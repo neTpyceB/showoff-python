@@ -27,9 +27,9 @@ RUN python -m pip install --upgrade pip==26.0.1 && \
     python -m pip install /tmp/*.whl && \
     rm -rf /tmp/*.whl
 
-EXPOSE 8000 9000
+EXPOSE 8000
 
-CMD ["showoff-aggregator"]
+CMD ["showoff-queue-api"]
 
 FROM python:3.14.3-slim AS dev
 

@@ -2,28 +2,27 @@
 
 ## Services
 
-- `aggregator`: public FastAPI service exposing `/aggregate/{user_id}`.
-- `mock-api`: local upstream service exposing `/profile/{user_id}`, `/activity/{user_id}`, and `/status/{user_id}`.
+- `api`: public FastAPI service for submitting jobs and reading status.
+- `worker`: Celery worker for background processing.
+- `beat`: Celery beat scheduler for periodic tasks.
+- `redis`: broker, result backend, and shared state store.
+
+## Domain
+
+- Job type: report generation.
+- Input: `report_id`, `content`.
+- Output: `report_id`, `line_count`, `word_count`, `checksum`.
 
 ## Structure
 
-- `src/showoff_async/config.py`: environment-driven runtime settings.
-- `src/showoff_async/service.py`: concurrent fetch, retry, timeout, and merge logic.
-- `src/showoff_async/app.py`: aggregator FastAPI app.
-- `src/showoff_async/mock_app.py`: local upstream FastAPI app for runtime validation.
-- `src/showoff_async/models.py`: request and response models.
-- `src/showoff_async/__main__.py`: aggregator process entrypoint.
-- `src/showoff_async/mock_main.py`: mock upstream process entrypoint.
+- `src/showoff_queue/config.py`: environment-driven runtime settings.
+- `src/showoff_queue/queue.py`: Celery app, tasks, retry policy, and scheduling.
+- `src/showoff_queue/app.py`: FastAPI routes and dependency wiring.
+- `src/showoff_queue/models.py`: request and response models.
+- `src/showoff_queue/__main__.py`: API process entrypoint.
 
-## Concurrency Model
+## Scheduling
 
-- One request fans out to three upstream HTTP calls.
-- `asyncio.TaskGroup` runs the calls concurrently.
-- Each upstream call uses an `httpx.AsyncClient` with explicit timeout.
-- Retries are handled in the aggregator, not by the HTTP client.
-
-## Failure Model
-
-- If any source still fails after retry exhaustion, the whole aggregation fails.
-- Timeout exhaustion returns `504`.
-- Other upstream failures return `502`.
+- Celery Beat runs `showoff_queue.record_heartbeat` on a fixed interval.
+- The task writes the latest heartbeat timestamp into Redis.
+- The API exposes the latest timestamp at `/schedules/heartbeat`.

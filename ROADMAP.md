@@ -2,17 +2,18 @@
 
 ## Completed
 
-- Async aggregator scaffold
-- Local upstream mock service
-- Concurrent HTTP fan-out and merge logic
-- Timeout and retry handling
+- FastAPI queue API scaffold
+- Celery worker and beat configuration
+- Redis-backed broker, result store, and heartbeat storage
+- Background report task with retry policy
+- Scheduled heartbeat task
 - Unit, integration, smoke, and e2e coverage
 - Docker runtime and GitHub Actions
 
 ## Current
 
-- Project 4 delivered
+- Project 5 delivered
 
 ## Next
 
-- Wait for the next async Python learning project
+- Wait for the next backend workload project

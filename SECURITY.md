@@ -6,7 +6,7 @@
 
 ## Findings
 
-- The public aggregator exposes only read endpoints.
-- Upstream base URLs are configured through environment variables.
-- Failure handling does not leak stack traces in API responses.
-- No credentials or tokens are required.
+- The public API exposes only report submission, job status, and scheduler status.
+- Redis is used only on the internal Docker network.
+- Failure responses do not expose worker stack traces.
+- No secrets or credentials are required for local runtime.

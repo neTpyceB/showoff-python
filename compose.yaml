@@ -1,47 +1,85 @@
 services:
-  aggregator:
+  api:
     build:
       context: .
       target: runtime
-    command: ["showoff-aggregator"]
+    command: ["showoff-queue-api"]
     environment:
-      AGGREGATOR_ACTIVITY_URL: http://mock-api:9000/activity
-      AGGREGATOR_PROFILE_URL: http://mock-api:9000/profile
-      AGGREGATOR_STATUS_URL: http://mock-api:9000/status
-      AGGREGATOR_HOST: 0.0.0.0
-      AGGREGATOR_PORT: "8000"
-      AGGREGATOR_RETRIES: "2"
-      AGGREGATOR_TIMEOUT_SECONDS: "0.5"
+      QUEUE_API_HOST: 0.0.0.0
+      QUEUE_API_PORT: "8000"
+      QUEUE_BROKER_URL: redis://redis:6379/0
+      QUEUE_RESULT_BACKEND: redis://redis:6379/1
+      QUEUE_REDIS_URL: redis://redis:6379/2
+      QUEUE_HEARTBEAT_KEY: queue:heartbeat
+      QUEUE_HEARTBEAT_SECONDS: "3"
+      QUEUE_RETRY_MAX: "2"
     depends_on:
-      - mock-api
+      - redis
+      - worker
+      - beat
     ports:
       - "8000:8000"
 
-  mock-api:
+  worker:
     build:
       context: .
       target: runtime
-    command: ["showoff-mock-api"]
+    command:
+      [
+        "celery",
+        "--app",
+        "showoff_queue.queue:celery_app",
+        "worker",
+        "--loglevel=info",
+      ]
     environment:
-      MOCK_API_HOST: 0.0.0.0
-      MOCK_API_PORT: "9000"
-    ports:
-      - "9000:9000"
+      QUEUE_BROKER_URL: redis://redis:6379/0
+      QUEUE_RESULT_BACKEND: redis://redis:6379/1
+      QUEUE_REDIS_URL: redis://redis:6379/2
+      QUEUE_HEARTBEAT_KEY: queue:heartbeat
+      QUEUE_HEARTBEAT_SECONDS: "3"
+      QUEUE_RETRY_MAX: "2"
+    depends_on:
+      - redis
+
+  beat:
+    build:
+      context: .
+      target: runtime
+    command:
+      [
+        "celery",
+        "--app",
+        "showoff_queue.queue:celery_app",
+        "beat",
+        "--loglevel=info",
+      ]
+    environment:
+      QUEUE_BROKER_URL: redis://redis:6379/0
+      QUEUE_RESULT_BACKEND: redis://redis:6379/1
+      QUEUE_REDIS_URL: redis://redis:6379/2
+      QUEUE_HEARTBEAT_KEY: queue:heartbeat
+      QUEUE_HEARTBEAT_SECONDS: "3"
+      QUEUE_RETRY_MAX: "2"
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:8.6.2-alpine
 
   checks:
     build:
       context: .
       target: dev
     environment:
-      AGGREGATOR_ACTIVITY_URL: http://upstream.test/activity
-      AGGREGATOR_PROFILE_URL: http://upstream.test/profile
-      AGGREGATOR_STATUS_URL: http://upstream.test/status
-      AGGREGATOR_HOST: 0.0.0.0
-      AGGREGATOR_PORT: "8000"
-      AGGREGATOR_RETRIES: "2"
-      AGGREGATOR_TIMEOUT_SECONDS: "0.1"
-      MOCK_API_HOST: 0.0.0.0
-      MOCK_API_PORT: "9000"
+      QUEUE_API_HOST: 0.0.0.0
+      QUEUE_API_PORT: "8000"
+      QUEUE_BROKER_URL: memory://
+      QUEUE_RESULT_BACKEND: cache+memory://
+      QUEUE_REDIS_URL: redis://redis:6379/2
+      QUEUE_HEARTBEAT_KEY: queue:heartbeat
+      QUEUE_HEARTBEAT_SECONDS: "3"
+      QUEUE_RETRY_MAX: "2"
     volumes:
       - .:/workspace
     working_dir: /workspace

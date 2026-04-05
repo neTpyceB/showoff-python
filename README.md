@@ -1,22 +1,23 @@
-# Async Data Aggregator
+# Report Generation Queue
 
-Minimal production-ready async aggregation service.
+Minimal production-ready queue system with FastAPI, Celery, and Redis.
 
 ## Features
 
-- Concurrent upstream HTTP calls
-- Merged response payload
-- Explicit timeout handling
-- Explicit retry handling
+- Background report jobs
+- Celery retries
+- Celery Beat scheduling
+- Job status API
 - Docker-first local run
 
 ## Stack
 
 - Python 3.14.3
 - FastAPI 0.135.2
-- HTTPX 0.28.1
-- Uvicorn 0.41.0
-- `asyncio.TaskGroup`
+- Celery 5.6.3
+- Redis 6.4.0 client
+- Redis 8.6.2-alpine server
+- Uvicorn 0.42.0
 
 ## Run
 
@@ -24,19 +25,17 @@ Minimal production-ready async aggregation service.
 docker compose up --build
 ```
 
-Aggregator:
+API:
 
 - `http://localhost:8000/docs`
-- `http://localhost:8000/aggregate/ada`
-
-Mock upstream:
-
-- `http://localhost:9000/docs`
+- `http://localhost:8000/health`
 
 ## Example
 
 ```bash
-curl http://localhost:8000/aggregate/ada
+curl -X POST http://localhost:8000/jobs/reports \
+  -H "Content-Type: application/json" \
+  -d '{"report_id":"demo","content":"celery jobs run in the background"}'
 ```
 
 ## Checks

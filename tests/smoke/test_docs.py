@@ -1,36 +1,39 @@
 from __future__ import annotations
 
-import httpx
 import pytest
 from fastapi.testclient import TestClient
 
-from showoff_async.app import create_app
-from showoff_async.config import AggregatorSettings
-from showoff_async.mock_app import create_mock_app
+from showoff_queue.app import create_app
+from showoff_queue.config import QueueSettings
+
+
+class FakeRedis:
+    def get(self, key: str) -> None:
+        return None
+
+    def close(self) -> None:
+        return None
 
 
 @pytest.mark.smoke
 def test_docs_openapi_and_health_are_available() -> None:
-    settings = AggregatorSettings(
-        profile_url="http://upstream.test/profile",
-        activity_url="http://upstream.test/activity",
-        status_url="http://upstream.test/status",
-        timeout_seconds=0.1,
-        retries=1,
+    settings = QueueSettings(
+        broker_url="memory://",
+        result_backend="cache+memory://",
+        redis_url="redis://redis:6379/2",
+        heartbeat_key="queue:heartbeat",
+        heartbeat_seconds=3,
+        retry_max=2,
         host="127.0.0.1",
         port=8000,
     )
-    client = httpx.AsyncClient(
-        transport=httpx.ASGITransport(app=create_mock_app()),
-        base_url="http://upstream.test",
-    )
-    test_client = TestClient(create_app(settings, client))
 
-    docs = test_client.get("/docs")
-    openapi = test_client.get("/openapi.json")
-    health = test_client.get("/health")
+    with TestClient(create_app(settings, redis_client=FakeRedis())) as client:
+        docs = client.get("/docs")
+        openapi = client.get("/openapi.json")
+        health = client.get("/health")
 
     assert docs.status_code == 200
     assert openapi.status_code == 200
-    assert openapi.json()["info"]["title"] == "Async Data Aggregator"
+    assert openapi.json()["info"]["title"] == "Report Generation Queue"
     assert health.json() == {"status": "ok"}
