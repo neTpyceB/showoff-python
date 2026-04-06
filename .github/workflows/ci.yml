@@ -9,16 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.14.3"
-      - name: Install
-        run: make install
-      - name: Lint
-        run: make lint
-      - name: Test
-        run: make test
-      - name: Build
-        run: make build
+      - name: Docker Checks
+        run: docker compose run --rm checks
       - name: Docker Build
-        run: docker build --target runtime --tag showoff-python:ci .
+        run: docker compose build auth data worker

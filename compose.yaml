@@ -1,36 +1,66 @@
 services:
-  api:
+  auth:
     build:
       context: .
       target: runtime
-    command: ["showoff-perf-api"]
+    command: ["showoff-auth-api"]
     environment:
-      PERF_API_HOST: 0.0.0.0
-      PERF_API_PORT: "8000"
-      PERF_REDIS_URL: redis://redis:6379/0
-      PERF_CACHE_TTL_SECONDS: "300"
-      PERF_DEFAULT_WORKERS: "2"
-      PERF_DEFAULT_ENGINE: auto
-    depends_on:
-      - redis
+      MICRO_AUTH_HOST: 0.0.0.0
+      MICRO_AUTH_PORT: "8000"
+      MICRO_AUTH_SERVICE_URL: http://auth:8000
+      MICRO_DATA_SERVICE_URL: http://data:8000
+      MICRO_WORKER_SERVICE_NAME: worker
     ports:
-      - "8000:8000"
+      - "8001:8000"
 
-  redis:
-    image: redis:8.6.2-alpine
+  data:
+    build:
+      context: .
+      target: runtime
+    command: ["showoff-data-api"]
+    environment:
+      MICRO_DATA_HOST: 0.0.0.0
+      MICRO_DATA_PORT: "8000"
+      MICRO_DATA_DB_PATH: /data/micro.db
+      MICRO_AUTH_SERVICE_URL: http://auth:8000
+      MICRO_DATA_SERVICE_URL: http://data:8000
+      MICRO_WORKER_SERVICE_NAME: worker
+    depends_on:
+      - auth
+    ports:
+      - "8002:8000"
+    volumes:
+      - micro-data:/data
+
+  worker:
+    build:
+      context: .
+      target: runtime
+    command: ["showoff-worker"]
+    environment:
+      MICRO_DATA_SERVICE_URL: http://data:8000
+      MICRO_WORKER_POLL_SECONDS: "1"
+    depends_on:
+      - data
 
   checks:
     build:
       context: .
       target: dev
     environment:
-      PERF_API_HOST: 0.0.0.0
-      PERF_API_PORT: "8000"
-      PERF_REDIS_URL: redis://localhost:6379/0
-      PERF_CACHE_TTL_SECONDS: "300"
-      PERF_DEFAULT_WORKERS: "2"
-      PERF_DEFAULT_ENGINE: auto
+      MICRO_AUTH_HOST: 0.0.0.0
+      MICRO_AUTH_PORT: "8000"
+      MICRO_DATA_HOST: 0.0.0.0
+      MICRO_DATA_PORT: "8000"
+      MICRO_DATA_DB_PATH: /workspace/.tmp/micro.db
+      MICRO_AUTH_SERVICE_URL: http://auth:8000
+      MICRO_DATA_SERVICE_URL: http://data:8000
+      MICRO_WORKER_SERVICE_NAME: worker
+      MICRO_WORKER_POLL_SECONDS: "1"
     volumes:
       - .:/workspace
     working_dir: /workspace
     command: ["sh", "-lc", "ruff check . && ruff format --check . && coverage run -m pytest && coverage report --fail-under=100 && python -m build"]
+
+volumes:
+  micro-data:

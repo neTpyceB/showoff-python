@@ -1,16 +1,15 @@
 [build-system]
-requires = ["Cython==3.2.4", "setuptools==82.0.1", "wheel==0.46.3"]
+requires = ["setuptools==82.0.1", "wheel==0.46.3"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "showoff-python"
-version = "0.8.0"
-description = "Production-ready high-performance optimization service."
+version = "0.9.0"
+description = "Production-ready microservices system."
 readme = "README.md"
 requires-python = ">=3.14,<3.15"
 dependencies = [
   "fastapi==0.135.3",
-  "redis==7.4.0",
   "uvicorn==0.44.0",
 ]
 
@@ -18,14 +17,15 @@ dependencies = [
 dev = [
   "build==1.4.2",
   "coverage[toml]==7.13.5",
-  "Cython==3.2.4",
   "httpx==0.28.1",
   "pytest==9.0.2",
   "ruff==0.15.9",
 ]
 
 [project.scripts]
-showoff-perf-api = "showoff_perf.__main__:main"
+showoff-auth-api = "showoff_micro.auth_main:main"
+showoff-data-api = "showoff_micro.data_main:main"
+showoff-worker = "showoff_micro.worker_main:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -39,7 +39,7 @@ show_missing = true
 
 [tool.coverage.run]
 branch = true
-source = ["showoff_perf"]
+source = ["showoff_micro"]
 
 [tool.pytest.ini_options]
 addopts = "-ra --strict-config --strict-markers"
