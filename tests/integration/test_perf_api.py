@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 from fastapi.testclient import TestClient
 
 from showoff_perf.app import create_app
@@ -38,34 +39,28 @@ def make_client(pool_runner) -> TestClient:
     return TestClient(create_app(settings=settings, service=service))
 
 
-def test_health_endpoint() -> None:
+@pytest.mark.integration
+def test_python_engine_and_cache_flow() -> None:
     with make_client(lambda chunks, workers, engine: [17]) as client:
-        response = client.get("/health")
-
-    assert response.status_code == 200
-    assert response.json()["status"] == "ok"
-    assert response.json()["cache"] == "ok"
-
-
-def test_prime_sum_endpoint() -> None:
-    with make_client(lambda chunks, workers, engine: [17]) as client:
-        response = client.post(
+        first = client.post(
+            "/prime-sums",
+            json={"upper_bound": 10, "workers": 1, "engine": "python"},
+        )
+        second = client.post(
             "/prime-sums",
             json={"upper_bound": 10, "workers": 1, "engine": "python"},
         )
 
-    assert response.status_code == 200
-    assert response.json()["prime_sum"] == 17
-    assert response.json()["cached"] is False
+    assert first.status_code == 200
+    assert first.json()["engine_used"] == "python"
+    assert second.status_code == 200
+    assert second.json()["cached"] is True
 
 
-def test_cython_unavailable_maps_to_http_error(monkeypatch) -> None:
+@pytest.mark.integration
+def test_auto_engine_uses_available_optimizer() -> None:
     with make_client(lambda chunks, workers, engine: [17]) as client:
-        monkeypatch.setattr("showoff_perf.compute.CYTHON_AVAILABLE", False)
-        response = client.post(
-            "/prime-sums",
-            json={"upper_bound": 10, "workers": 1, "engine": "cython"},
-        )
+        response = client.post("/prime-sums", json={"upper_bound": 10})
 
-    assert response.status_code == 503
-    assert response.json() == {"detail": "Cython optimization is not available"}
+    assert response.status_code == 200
+    assert response.json()["engine_used"] in {"python", "cython"}

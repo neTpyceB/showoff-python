@@ -3,28 +3,34 @@ services:
     build:
       context: .
       target: runtime
-    command: ["showoff-saas-api"]
+    command: ["showoff-perf-api"]
     environment:
-      SAAS_API_HOST: 0.0.0.0
-      SAAS_API_PORT: "8000"
-      SAAS_DB_PATH: /data/saas.db
+      PERF_API_HOST: 0.0.0.0
+      PERF_API_PORT: "8000"
+      PERF_REDIS_URL: redis://redis:6379/0
+      PERF_CACHE_TTL_SECONDS: "300"
+      PERF_DEFAULT_WORKERS: "2"
+      PERF_DEFAULT_ENGINE: auto
+    depends_on:
+      - redis
     ports:
       - "8000:8000"
-    volumes:
-      - saas-data:/data
+
+  redis:
+    image: redis:8.6.2-alpine
 
   checks:
     build:
       context: .
       target: dev
     environment:
-      SAAS_API_HOST: 0.0.0.0
-      SAAS_API_PORT: "8000"
-      SAAS_DB_PATH: /workspace/.tmp/saas.db
+      PERF_API_HOST: 0.0.0.0
+      PERF_API_PORT: "8000"
+      PERF_REDIS_URL: redis://localhost:6379/0
+      PERF_CACHE_TTL_SECONDS: "300"
+      PERF_DEFAULT_WORKERS: "2"
+      PERF_DEFAULT_ENGINE: auto
     volumes:
       - .:/workspace
     working_dir: /workspace
     command: ["sh", "-lc", "ruff check . && ruff format --check . && coverage run -m pytest && coverage report --fail-under=100 && python -m build"]
-
-volumes:
-  saas-data:

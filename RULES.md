@@ -1,6 +1,6 @@
 # Rules
 
-- Implement only explicit SaaS backend scope.
+- Implement only explicit optimization-service scope.
 - Keep runtime dependencies minimal.
-- Keep organization scoping and RBAC explicit in the service layer.
+- Keep multiprocessing, profiling, and cache behavior explicit in the compute layer.
 - Keep Docker, tests, CI, and docs synchronized.

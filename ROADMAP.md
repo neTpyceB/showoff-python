@@ -2,18 +2,17 @@
 
 ## Completed
 
-- FastAPI SaaS API scaffold
-- SQLite-backed organizations, memberships, billing, and audit tables
-- Multi-tenant organization scoping
-- RBAC with `admin` and `member`
-- Billing mock checkout flow
-- Audit log capture for mutating operations
+- FastAPI optimization API scaffold
+- Redis-backed caching
+- Multiprocessing prime-sum execution
+- CPU and memory profiling
+- Cython execution path
 - Unit, integration, smoke, and e2e coverage
 - Docker runtime and GitHub Actions
 
 ## Current
 
-- Project 7 delivered
+- Project 8 delivered
 
 ## Next
 

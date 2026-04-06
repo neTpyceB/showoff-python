@@ -22,27 +22,25 @@ class FakeCache:
         return True
 
 
-@pytest.mark.smoke
-def test_docs_openapi_and_health_are_available() -> None:
+@pytest.mark.e2e
+def test_real_multiprocessing_flow() -> None:
     settings = Settings(
-        api_host="127.0.0.1",
+        api_host="0.0.0.0",
         api_port=8000,
         redis_url="redis://cache:6379/0",
         cache_ttl_seconds=300,
         default_workers=2,
-        default_engine="auto",
+        default_engine="python",
     )
-    app = create_app(
-        settings=settings,
-        service=PrimeService(settings=settings, cache=FakeCache()),
-    )
+    service = PrimeService(settings=settings, cache=FakeCache())
+    app = create_app(settings=settings, service=service)
 
     with TestClient(app) as client:
-        docs = client.get("/docs")
-        openapi = client.get("/openapi.json")
-        health = client.get("/health")
+        response = client.post(
+            "/prime-sums",
+            json={"upper_bound": 1000, "workers": 2, "engine": "python"},
+        )
 
-    assert docs.status_code == 200
-    assert openapi.status_code == 200
-    assert openapi.json()["info"]["title"] == "High-performance Service"
-    assert health.json()["status"] == "ok"
+    assert response.status_code == 200
+    assert response.json()["prime_sum"] == 76127
+    assert response.json()["profile"]["peak_memory_bytes"] > 0

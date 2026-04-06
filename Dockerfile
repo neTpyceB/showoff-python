@@ -6,7 +6,11 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
 
 WORKDIR /app
 
-COPY pyproject.toml README.md ./
+RUN apt-get update && \
+    apt-get install --yes --no-install-recommends build-essential && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY pyproject.toml README.md setup.py MANIFEST.in ./
 COPY src ./src
 
 RUN python -m pip install --upgrade pip==26.0.1 && \
@@ -29,7 +33,7 @@ RUN python -m pip install --upgrade pip==26.0.1 && \
 
 EXPOSE 8000
 
-CMD ["showoff-saas-api"]
+CMD ["showoff-perf-api"]
 
 FROM python:3.14.3-slim AS dev
 
@@ -40,6 +44,10 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
 WORKDIR /workspace
 
 COPY . .
+
+RUN apt-get update && \
+    apt-get install --yes --no-install-recommends build-essential && \
+    rm -rf /var/lib/apt/lists/*
 
 RUN python -m pip install --upgrade pip==26.0.1 && \
     python -m pip install -e .[dev]

@@ -2,28 +2,29 @@
 
 ## Services
 
-- `api`: public FastAPI service for organization, billing, and audit operations.
-- `sqlite`: local file-backed storage mounted into the API container.
+- `api`: FastAPI service exposing the optimization endpoint.
+- `redis`: cache store for repeated computations.
 
 ## Domain
 
-- Tenant boundary: organization.
-- Roles: `admin`, `member`.
-- Billing mock: plan + status per organization.
-- Audit log: append-only records for organization creation, membership updates, and billing checkout.
+- Workload: sum of primes up to `upper_bound`.
+- Engines: `python`, `cython`, `auto`.
+- Cache key: `upper_bound + workers + engine request`.
+- Profile output: CPU seconds, peak memory bytes, and hottest function name.
 
 ## Structure
 
-- `src/showoff_saas/config.py`: environment-driven runtime settings.
-- `src/showoff_saas/repository.py`: SQLite schema and data access.
-- `src/showoff_saas/service.py`: tenant scoping and RBAC rules.
-- `src/showoff_saas/app.py`: FastAPI routes and HTTP mapping.
-- `src/showoff_saas/models.py`: request and response models.
-- `src/showoff_saas/__main__.py`: API process entrypoint.
+- `src/showoff_perf/config.py`: environment-driven runtime settings.
+- `src/showoff_perf/cache.py`: Redis cache adapter.
+- `src/showoff_perf/kernels.py`: pure Python prime kernel.
+- `src/showoff_perf/cykernels.pyx`: Cython prime kernel.
+- `src/showoff_perf/compute.py`: profiling, caching, engine selection, and multiprocessing orchestration.
+- `src/showoff_perf/app.py`: FastAPI routes.
+- `src/showoff_perf/__main__.py`: API process entrypoint.
 
-## Access Model
+## Execution Model
 
-- `X-User-Id` identifies the current actor.
-- Organization reads require membership.
-- Membership writes, billing reads, billing checkout, and audit log reads require `admin`.
-- Non-members receive `404` on organization reads and `403` on admin-only operations for existing organizations.
+- Requests are profiled with `cProfile` and `tracemalloc`.
+- Work is split into numeric chunks and executed with `multiprocessing.Pool`.
+- Cache hits return the stored result payload with `cached=true`.
+- `auto` prefers Cython when the extension is available.
