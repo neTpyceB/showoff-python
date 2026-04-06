@@ -1,4 +1,4 @@
-FROM python:3.14.0-slim AS builder
+FROM python:3.14.3-slim AS builder
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -13,7 +13,7 @@ RUN python -m pip install --upgrade pip==26.0.1 && \
     python -m pip install build==1.4.2 && \
     python -m build
 
-FROM python:3.14.0-slim AS runtime
+FROM python:3.14.3-slim AS runtime
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -29,9 +29,9 @@ RUN python -m pip install --upgrade pip==26.0.1 && \
 
 EXPOSE 8000
 
-CMD ["showoff-pipeline-api"]
+CMD ["showoff-saas-api"]
 
-FROM python:3.14.0-slim AS dev
+FROM python:3.14.3-slim AS dev
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PYTHONDONTWRITEBYTECODE=1 \

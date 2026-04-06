@@ -2,12 +2,12 @@
 
 ## Audit Date
 
-- 2026-04-05
+- 2026-04-06
 
 ## Findings
 
-- The public API exposes only health, monitoring, and pipeline run endpoints.
+- The public API exposes only organization, billing, audit, and health endpoints.
+- Tenant access is scoped by persisted organization memberships.
+- Admin-only operations are enforced in the service layer.
 - SQLite storage is mounted only into the API container.
-- The dataset contract is fixed to `timestamp,account,amount`.
-- Invalid datasets fail the run and are not partially stored.
-- No secrets or credentials are required for local runtime.
+- No secrets or external credentials are required for local runtime.

@@ -1,6 +1,6 @@
 # Rules
 
-- Implement only explicit ETL scope.
+- Implement only explicit SaaS backend scope.
 - Keep runtime dependencies minimal.
-- Keep streaming inserts memory-bounded.
+- Keep organization scoping and RBAC explicit in the service layer.
 - Keep Docker, tests, CI, and docs synchronized.

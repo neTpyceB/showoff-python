@@ -10,15 +10,13 @@ class Settings:
     api_host: str
     api_port: int
     db_path: str
-    insert_batch_size: int
 
     @classmethod
     def from_env(cls) -> "Settings":
         return cls(
-            api_host=getenv("PIPELINE_API_HOST", "0.0.0.0"),
-            api_port=int(getenv("PIPELINE_API_PORT", "8000")),
-            db_path=getenv("PIPELINE_DB_PATH", "data/pipeline.db"),
-            insert_batch_size=int(getenv("PIPELINE_INSERT_BATCH_SIZE", "500")),
+            api_host=getenv("SAAS_API_HOST", "0.0.0.0"),
+            api_port=int(getenv("SAAS_API_PORT", "8000")),
+            db_path=getenv("SAAS_DB_PATH", "data/saas.db"),
         )
 
 

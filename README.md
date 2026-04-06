@@ -1,22 +1,21 @@
-# ETL Pipeline System
+# Multi-tenant SaaS Backend
 
-Minimal production-ready ETL service with FastAPI and SQLite.
+Minimal production-ready SaaS backend with organization scoping, RBAC, billing mock, and audit logs.
 
 ## Features
 
-- Ingest CSV datasets
-- Transform rows into normalized records
-- Store transformed data in SQLite
-- Streaming and batch execution modes
-- Logging and monitoring endpoint
+- Organizations
+- Multi-tenant organization scoping
+- Role-based access with `admin` and `member`
+- Billing mock checkout flow
+- Audit logs for mutating operations
 - Docker-first local run
 
 ## Stack
 
-- Python 3.14.0
+- Python 3.14.3
 - FastAPI 0.135.3
 - Uvicorn 0.43.0
-- python-multipart 0.0.24
 - SQLite (stdlib)
 
 ## Run
@@ -29,20 +28,16 @@ API:
 
 - `http://localhost:8000/docs`
 - `http://localhost:8000/health`
-- `http://localhost:8000/monitoring`
+
+All tenant-scoped requests require the `X-User-Id` header.
 
 ## Example
 
 ```bash
-curl -X POST "http://localhost:8000/pipeline/runs?mode=stream" \
-  -F "file=@sample.csv"
-```
-
-Expected CSV columns:
-
-```csv
-timestamp,account,amount
-2026-01-01T10:00:00+00:00,Acme,10.50
+curl -X POST http://localhost:8000/organizations \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: alice" \
+  -d '{"name":"Acme"}'
 ```
 
 ## Checks

@@ -3,30 +3,28 @@ services:
     build:
       context: .
       target: runtime
-    command: ["showoff-pipeline-api"]
+    command: ["showoff-saas-api"]
     environment:
-      PIPELINE_API_HOST: 0.0.0.0
-      PIPELINE_API_PORT: "8000"
-      PIPELINE_DB_PATH: /data/pipeline.db
-      PIPELINE_INSERT_BATCH_SIZE: "500"
+      SAAS_API_HOST: 0.0.0.0
+      SAAS_API_PORT: "8000"
+      SAAS_DB_PATH: /data/saas.db
     ports:
       - "8000:8000"
     volumes:
-      - pipeline-data:/data
+      - saas-data:/data
 
   checks:
     build:
       context: .
       target: dev
     environment:
-      PIPELINE_API_HOST: 0.0.0.0
-      PIPELINE_API_PORT: "8000"
-      PIPELINE_DB_PATH: /workspace/.tmp/pipeline.db
-      PIPELINE_INSERT_BATCH_SIZE: "500"
+      SAAS_API_HOST: 0.0.0.0
+      SAAS_API_PORT: "8000"
+      SAAS_DB_PATH: /workspace/.tmp/saas.db
     volumes:
       - .:/workspace
     working_dir: /workspace
     command: ["sh", "-lc", "ruff check . && ruff format --check . && coverage run -m pytest && coverage report --fail-under=100 && python -m build"]
 
 volumes:
-  pipeline-data:
+  saas-data:

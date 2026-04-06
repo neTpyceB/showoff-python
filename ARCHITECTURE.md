@@ -2,30 +2,28 @@
 
 ## Services
 
-- `api`: public FastAPI service for ingesting datasets and reading pipeline state.
+- `api`: public FastAPI service for organization, billing, and audit operations.
 - `sqlite`: local file-backed storage mounted into the API container.
 
 ## Domain
 
-- Dataset type: CSV.
-- Required columns: `timestamp`, `account`, `amount`.
-- Transform: normalize `account`, parse `timestamp`, convert `amount` to cents.
-- Storage: `pipeline_runs` metadata table plus `etl_records` transformed row table.
+- Tenant boundary: organization.
+- Roles: `admin`, `member`.
+- Billing mock: plan + status per organization.
+- Audit log: append-only records for organization creation, membership updates, and billing checkout.
 
 ## Structure
 
-- `src/showoff_pipeline/config.py`: environment-driven runtime settings.
-- `src/showoff_pipeline/pipeline.py`: schema management, ingest, transform, and store logic.
-- `src/showoff_pipeline/app.py`: FastAPI routes and dependency wiring.
-- `src/showoff_pipeline/models.py`: API response models and execution modes.
-- `src/showoff_pipeline/__main__.py`: API process entrypoint.
+- `src/showoff_saas/config.py`: environment-driven runtime settings.
+- `src/showoff_saas/repository.py`: SQLite schema and data access.
+- `src/showoff_saas/service.py`: tenant scoping and RBAC rules.
+- `src/showoff_saas/app.py`: FastAPI routes and HTTP mapping.
+- `src/showoff_saas/models.py`: request and response models.
+- `src/showoff_saas/__main__.py`: API process entrypoint.
 
-## Execution Modes
+## Access Model
 
-- `stream`: reads and inserts rows in bounded batches for stable memory usage.
-- `batch`: materializes the dataset before insert to expose the batch tradeoff explicitly.
-
-## Monitoring
-
-- `/monitoring` returns run totals, success and failure counts, stored row totals, and the latest completion time.
-- Application logging emits run start, success, and failure events.
+- `X-User-Id` identifies the current actor.
+- Organization reads require membership.
+- Membership writes, billing reads, billing checkout, and audit log reads require `admin`.
+- Non-members receive `404` on organization reads and `403` on admin-only operations for existing organizations.

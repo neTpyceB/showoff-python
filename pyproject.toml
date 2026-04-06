@@ -4,13 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "showoff-python"
-version = "0.6.0"
-description = "Production-ready ETL pipeline service."
+version = "0.7.0"
+description = "Production-ready multi-tenant SaaS backend."
 readme = "README.md"
 requires-python = ">=3.14,<3.15"
 dependencies = [
   "fastapi==0.135.3",
-  "python-multipart==0.0.24",
   "uvicorn==0.43.0",
 ]
 
@@ -24,7 +23,7 @@ dev = [
 ]
 
 [project.scripts]
-showoff-pipeline-api = "showoff_pipeline.__main__:main"
+showoff-saas-api = "showoff_saas.__main__:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -38,7 +37,7 @@ show_missing = true
 
 [tool.coverage.run]
 branch = true
-source = ["showoff_pipeline"]
+source = ["showoff_saas"]
 
 [tool.pytest.ini_options]
 addopts = "-ra --strict-config --strict-markers"
