@@ -2,16 +2,16 @@ from __future__ import annotations
 
 import uvicorn
 
-from .app import create_app
 from .config import get_settings
+from .data_app import create_data_app
 
 
 def main() -> None:
     settings = get_settings()
     uvicorn.run(
-        create_app(settings=settings),
-        host=settings.api_host,
-        port=settings.api_port,
+        create_data_app(settings),
+        host=settings.data_host,
+        port=settings.data_port,
     )
 
 

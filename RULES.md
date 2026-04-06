@@ -1,6 +1,6 @@
 # Rules
 
-- Implement only explicit optimization-service scope.
-- Keep runtime dependencies minimal.
-- Keep multiprocessing, profiling, and cache behavior explicit in the compute layer.
+- Implement only explicit microservices scope.
+- Keep service boundaries explicit.
+- Keep inter-service communication direct and minimal.
 - Keep Docker, tests, CI, and docs synchronized.

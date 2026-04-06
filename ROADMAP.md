@@ -2,17 +2,18 @@
 
 ## Completed
 
-- FastAPI optimization API scaffold
-- Redis-backed caching
-- Multiprocessing prime-sum execution
-- CPU and memory profiling
-- Cython execution path
+- Auth service
+- Data service
+- Worker service
+- Service-to-service HTTP validation
+- Basic discovery endpoints
+- Docker multi-container runtime
 - Unit, integration, smoke, and e2e coverage
-- Docker runtime and GitHub Actions
+- GitHub Actions fixed to run checks through Docker
 
 ## Current
 
-- Project 8 delivered
+- Project 9 delivered
 
 ## Next
 

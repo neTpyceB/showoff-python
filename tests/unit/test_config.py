@@ -1,34 +1,40 @@
 from __future__ import annotations
 
-from showoff_perf.config import Settings, get_settings
+from showoff_micro.config import Settings, get_settings
 
 
 def test_settings_from_env(monkeypatch) -> None:
-    monkeypatch.setenv("PERF_API_HOST", "127.0.0.1")
-    monkeypatch.setenv("PERF_API_PORT", "9000")
-    monkeypatch.setenv("PERF_REDIS_URL", "redis://cache:6379/0")
-    monkeypatch.setenv("PERF_CACHE_TTL_SECONDS", "42")
-    monkeypatch.setenv("PERF_DEFAULT_WORKERS", "4")
-    monkeypatch.setenv("PERF_DEFAULT_ENGINE", "python")
+    monkeypatch.setenv("MICRO_AUTH_HOST", "127.0.0.1")
+    monkeypatch.setenv("MICRO_AUTH_PORT", "9001")
+    monkeypatch.setenv("MICRO_DATA_HOST", "127.0.0.1")
+    monkeypatch.setenv("MICRO_DATA_PORT", "9002")
+    monkeypatch.setenv("MICRO_DATA_DB_PATH", "/tmp/micro.db")
+    monkeypatch.setenv("MICRO_AUTH_SERVICE_URL", "http://auth.local")
+    monkeypatch.setenv("MICRO_DATA_SERVICE_URL", "http://data.local")
+    monkeypatch.setenv("MICRO_WORKER_SERVICE_NAME", "worker-local")
+    monkeypatch.setenv("MICRO_WORKER_POLL_SECONDS", "5")
 
     assert Settings.from_env() == Settings(
-        api_host="127.0.0.1",
-        api_port=9000,
-        redis_url="redis://cache:6379/0",
-        cache_ttl_seconds=42,
-        default_workers=4,
-        default_engine="python",
+        auth_host="127.0.0.1",
+        auth_port=9001,
+        data_host="127.0.0.1",
+        data_port=9002,
+        data_db_path="/tmp/micro.db",
+        auth_service_url="http://auth.local",
+        data_service_url="http://data.local",
+        worker_service_name="worker-local",
+        worker_poll_seconds=5,
     )
 
 
 def test_get_settings_is_cached(monkeypatch) -> None:
     get_settings.cache_clear()
-    monkeypatch.setenv("PERF_REDIS_URL", "redis://first:6379/0")
+    monkeypatch.setenv("MICRO_DATA_DB_PATH", "/tmp/first.db")
 
     first = get_settings()
-    monkeypatch.setenv("PERF_REDIS_URL", "redis://second:6379/0")
+    monkeypatch.setenv("MICRO_DATA_DB_PATH", "/tmp/second.db")
     second = get_settings()
 
     assert first is second
-    assert second.redis_url == "redis://first:6379/0"
+    assert second.data_db_path == "/tmp/first.db"
     get_settings.cache_clear()

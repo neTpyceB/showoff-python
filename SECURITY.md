@@ -6,7 +6,8 @@
 
 ## Findings
 
-- The public API exposes only health and compute endpoints.
-- Redis is internal to the Docker network and not published to the host.
-- The service accepts only structured JSON compute requests.
+- Public traffic is limited to the auth and data services.
+- Token validation is delegated from data to auth over the internal Docker network.
+- SQLite storage is mounted only into the data container.
+- Worker-only endpoints are exposed only on the internal data service port.
 - No secrets or external credentials are required for local runtime.

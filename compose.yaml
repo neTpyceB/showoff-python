@@ -10,6 +10,11 @@ services:
       MICRO_AUTH_SERVICE_URL: http://auth:8000
       MICRO_DATA_SERVICE_URL: http://data:8000
       MICRO_WORKER_SERVICE_NAME: worker
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib import request; request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
     ports:
       - "8001:8000"
 
@@ -26,7 +31,13 @@ services:
       MICRO_DATA_SERVICE_URL: http://data:8000
       MICRO_WORKER_SERVICE_NAME: worker
     depends_on:
-      - auth
+      auth:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib import request; request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
     ports:
       - "8002:8000"
     volumes:
@@ -37,11 +48,13 @@ services:
       context: .
       target: runtime
     command: ["showoff-worker"]
+    restart: on-failure
     environment:
       MICRO_DATA_SERVICE_URL: http://data:8000
       MICRO_WORKER_POLL_SECONDS: "1"
     depends_on:
-      - data
+      data:
+        condition: service_healthy
 
   checks:
     build:

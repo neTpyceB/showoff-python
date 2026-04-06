@@ -1,23 +1,24 @@
-# High-performance Service
+# Microservices System
 
-Minimal production-ready optimization service with profiling, Redis caching, multiprocessing, and a Cython execution path.
+Minimal production-ready distributed backend with auth, data, and worker services.
 
 ## Features
 
-- CPU and memory profiling
-- Redis-backed result caching
-- Multiprocessing execution
-- Python and Cython engines
-- Docker-first local run
+- Auth service
+- Data service
+- Worker service
+- Service-to-service HTTP communication
+- Basic service discovery endpoints
+- Docker multi-container runtime
+- Health-gated startup ordering
+- Worker auto-restart on failure
 
 ## Stack
 
 - Python 3.14.3
 - FastAPI 0.135.3
 - Uvicorn 0.44.0
-- redis-py 7.4.0
-- Redis 8.6.2-alpine
-- Cython 3.2.4
+- SQLite (stdlib)
 
 ## Run
 
@@ -25,17 +26,24 @@ Minimal production-ready optimization service with profiling, Redis caching, mul
 docker compose up --build
 ```
 
-API:
+Service docs:
 
-- `http://localhost:8000/docs`
-- `http://localhost:8000/health`
+- Auth: `http://localhost:8001/docs`
+- Data: `http://localhost:8002/docs`
 
 ## Example
 
 ```bash
-curl -X POST http://localhost:8000/prime-sums \
+curl -X POST http://localhost:8001/tokens \
   -H "Content-Type: application/json" \
-  -d '{"upper_bound":100000,"workers":2,"engine":"auto"}'
+  -d '{"user_id":"alice"}'
+```
+
+```bash
+curl -X POST http://localhost:8002/jobs \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer alice" \
+  -d '{"payload":"hello distributed world"}'
 ```
 
 ## Checks
