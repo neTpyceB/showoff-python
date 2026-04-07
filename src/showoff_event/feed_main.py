@@ -2,16 +2,16 @@ from __future__ import annotations
 
 import uvicorn
 
-from .auth_app import create_auth_app
 from .config import get_settings
+from .feed_app import create_feed_app
 
 
 def main() -> None:
     settings = get_settings()
     uvicorn.run(
-        create_auth_app(settings),
-        host=settings.auth_host,
-        port=settings.auth_port,
+        create_feed_app(settings),
+        host=settings.feed_host,
+        port=settings.feed_port,
     )
 
 

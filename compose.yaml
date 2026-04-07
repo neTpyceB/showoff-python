@@ -1,15 +1,48 @@
 services:
-  auth:
+  redis:
+    image: redis:8.6.2-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+
+  platform:
     build:
       context: .
       target: runtime
-    command: ["showoff-auth-api"]
+    command: ["showoff-platform-api"]
     environment:
-      MICRO_AUTH_HOST: 0.0.0.0
-      MICRO_AUTH_PORT: "8000"
-      MICRO_AUTH_SERVICE_URL: http://auth:8000
-      MICRO_DATA_SERVICE_URL: http://data:8000
-      MICRO_WORKER_SERVICE_NAME: worker
+      EVENT_PLATFORM_HOST: 0.0.0.0
+      EVENT_PLATFORM_PORT: "8000"
+      EVENT_REDIS_URL: redis://redis:6379/0
+      EVENT_CHANNEL: platform.events
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib import request; request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+    ports:
+      - "8000:8000"
+
+  feed:
+    build:
+      context: .
+      target: runtime
+    command: ["showoff-feed-api"]
+    environment:
+      EVENT_FEED_HOST: 0.0.0.0
+      EVENT_FEED_PORT: "8000"
+      EVENT_FEED_DB_PATH: /data/feed.db
+      EVENT_REDIS_URL: redis://redis:6379/0
+      EVENT_CHANNEL: platform.events
+    depends_on:
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "from urllib import request; request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
       interval: 2s
@@ -17,21 +50,22 @@ services:
       retries: 10
     ports:
       - "8001:8000"
+    volumes:
+      - feed-data:/data
 
-  data:
+  notifications:
     build:
       context: .
       target: runtime
-    command: ["showoff-data-api"]
+    command: ["showoff-notification-api"]
     environment:
-      MICRO_DATA_HOST: 0.0.0.0
-      MICRO_DATA_PORT: "8000"
-      MICRO_DATA_DB_PATH: /data/micro.db
-      MICRO_AUTH_SERVICE_URL: http://auth:8000
-      MICRO_DATA_SERVICE_URL: http://data:8000
-      MICRO_WORKER_SERVICE_NAME: worker
+      EVENT_NOTIFICATION_HOST: 0.0.0.0
+      EVENT_NOTIFICATION_PORT: "8000"
+      EVENT_NOTIFICATION_DB_PATH: /data/notifications.db
+      EVENT_REDIS_URL: redis://redis:6379/0
+      EVENT_CHANNEL: platform.events
     depends_on:
-      auth:
+      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "from urllib import request; request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
@@ -41,39 +75,56 @@ services:
     ports:
       - "8002:8000"
     volumes:
-      - micro-data:/data
+      - notification-data:/data
 
-  worker:
+  audit:
     build:
       context: .
       target: runtime
-    command: ["showoff-worker"]
-    restart: on-failure
+    command: ["showoff-audit-api"]
     environment:
-      MICRO_DATA_SERVICE_URL: http://data:8000
-      MICRO_WORKER_POLL_SECONDS: "1"
+      EVENT_AUDIT_HOST: 0.0.0.0
+      EVENT_AUDIT_PORT: "8000"
+      EVENT_AUDIT_DB_PATH: /data/audit.db
+      EVENT_REDIS_URL: redis://redis:6379/0
+      EVENT_CHANNEL: platform.events
     depends_on:
-      data:
+      redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib import request; request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+    ports:
+      - "8003:8000"
+    volumes:
+      - audit-data:/data
 
   checks:
     build:
       context: .
       target: dev
     environment:
-      MICRO_AUTH_HOST: 0.0.0.0
-      MICRO_AUTH_PORT: "8000"
-      MICRO_DATA_HOST: 0.0.0.0
-      MICRO_DATA_PORT: "8000"
-      MICRO_DATA_DB_PATH: /workspace/.tmp/micro.db
-      MICRO_AUTH_SERVICE_URL: http://auth:8000
-      MICRO_DATA_SERVICE_URL: http://data:8000
-      MICRO_WORKER_SERVICE_NAME: worker
-      MICRO_WORKER_POLL_SECONDS: "1"
+      EVENT_PLATFORM_HOST: 0.0.0.0
+      EVENT_PLATFORM_PORT: "8000"
+      EVENT_FEED_HOST: 0.0.0.0
+      EVENT_FEED_PORT: "8001"
+      EVENT_FEED_DB_PATH: /workspace/.tmp/feed.db
+      EVENT_NOTIFICATION_HOST: 0.0.0.0
+      EVENT_NOTIFICATION_PORT: "8002"
+      EVENT_NOTIFICATION_DB_PATH: /workspace/.tmp/notifications.db
+      EVENT_AUDIT_HOST: 0.0.0.0
+      EVENT_AUDIT_PORT: "8003"
+      EVENT_AUDIT_DB_PATH: /workspace/.tmp/audit.db
+      EVENT_REDIS_URL: redis://redis:6379/0
+      EVENT_CHANNEL: platform.events
     volumes:
       - .:/workspace
     working_dir: /workspace
     command: ["sh", "-lc", "ruff check . && ruff format --check . && coverage run -m pytest && coverage report --fail-under=100 && python -m build"]
 
 volumes:
-  micro-data:
+  feed-data:
+  notification-data:
+  audit-data:

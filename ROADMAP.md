@@ -2,18 +2,19 @@
 
 ## Completed
 
-- Auth service
-- Data service
-- Worker service
-- Service-to-service HTTP validation
-- Basic discovery endpoints
-- Docker multi-container runtime
+- Platform event publishing API
+- Redis pub/sub event bus
+- Feed projection service
+- Notification projection service
+- Audit projection service
+- Eventual consistency across async services
+- Docker multi-container runtime with Redis
 - Unit, integration, smoke, and e2e coverage
-- GitHub Actions fixed to run checks through Docker
+- GitHub Actions updated for the event platform
 
 ## Current
 
-- Project 9 delivered
+- Project 10 delivered
 
 ## Next
 

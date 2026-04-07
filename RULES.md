@@ -1,6 +1,6 @@
 # Rules
 
-- Implement only explicit microservices scope.
+- Implement only explicit event-platform scope.
 - Keep service boundaries explicit.
-- Keep inter-service communication direct and minimal.
+- Keep event publication and projection logic direct and minimal.
 - Keep Docker, tests, CI, and docs synchronized.

@@ -2,33 +2,25 @@
 
 ## Services
 
-- `auth`: token issuance and validation service.
-- `data`: job storage and public read/write API.
-- `worker`: background processor polling the data service.
+- `platform`: accepts activity events over HTTP and publishes them to Redis.
+- `feed`: subscribes to the bus and maintains a user activity feed projection.
+- `notifications`: subscribes to the bus and maintains user notifications.
+- `audit`: subscribes to the bus and persists the full event log.
+- `redis`: event bus for fan-out delivery.
 
-## Communication
+## Flow
 
-- Clients call `auth` for tokens.
-- Clients call `data` with `Authorization: Bearer <token>`.
-- `data` validates tokens by calling `auth /validate`.
-- `worker` claims and completes jobs through `data` internal endpoints.
-
-## Service Discovery
-
-- `auth /discovery` and `data /discovery` expose the configured service addresses.
-- Docker service names provide the runtime lookup mechanism: `auth`, `data`, `worker`.
-- Compose health checks gate startup so the worker starts only after the APIs are live.
-- The worker uses an on-failure restart policy so it recovers if the data service restarts.
+- Clients publish `activity.created` events to `platform`.
+- `platform` writes nothing locally and only emits to the bus.
+- `feed`, `notifications`, and `audit` react asynchronously and persist their own SQLite read models.
+- Reads are eventually consistent because projections update after publish.
 
 ## Structure
 
-- `src/showoff_micro/config.py`: environment-driven service settings.
-- `src/showoff_micro/auth_app.py`: auth service API.
-- `src/showoff_micro/data_app.py`: data service API.
-- `src/showoff_micro/store.py`: SQLite job storage.
-- `src/showoff_micro/auth_client.py`: auth-service HTTP client.
-- `src/showoff_micro/data_client.py`: data-service HTTP client for the worker.
-- `src/showoff_micro/worker_service.py`: worker loop and job processing.
-- `src/showoff_micro/auth_main.py`: auth entrypoint.
-- `src/showoff_micro/data_main.py`: data entrypoint.
-- `src/showoff_micro/worker_main.py`: worker entrypoint.
+- `src/showoff_event/config.py`: environment-driven service settings.
+- `src/showoff_event/bus.py`: Redis publisher and subscriber loop.
+- `src/showoff_event/store.py`: SQLite projection stores.
+- `src/showoff_event/platform_app.py`: event publishing API.
+- `src/showoff_event/feed_app.py`: feed API plus subscriber.
+- `src/showoff_event/notification_app.py`: notification API plus subscriber.
+- `src/showoff_event/audit_app.py`: audit API plus subscriber.

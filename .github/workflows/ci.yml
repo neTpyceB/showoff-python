@@ -12,4 +12,4 @@ jobs:
       - name: Docker Checks
         run: docker compose run --rm checks
       - name: Docker Build
-        run: docker compose build auth data worker
+        run: docker compose build platform feed notifications audit

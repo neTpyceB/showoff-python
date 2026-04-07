@@ -29,7 +29,7 @@ RUN python -m pip install --upgrade pip==26.0.1 && \
 
 EXPOSE 8000
 
-CMD ["showoff-auth-api"]
+CMD ["showoff-platform-api"]
 
 FROM python:3.14.3-slim AS dev
 
